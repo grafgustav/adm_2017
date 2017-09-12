@@ -1,101 +1,40 @@
-# begin
-import numpy as np
 import time
-
-ratings = []
-movies = []
-users = []
-
-# TODO: Implement two methods, one filling the matrix on-the-fly, the other first loading everything into memory
-
-def read_data_set_into_memory():
+import numpy as np
 
 
-# loads the ml-1m dataset and returns a triple (ratings, movies, users)
-def readDataset():
+def read_dataset():
+    """
+    Reads the ratings dataset and
+    """
     start_time = time.time()
+    ratings = []
 
     # load the ratings dataset
-    ratingsFile = open('ml-1m/ratings.dat', 'r', encoding='latin-1')
-    for line in ratingsFile:
-        ratings.append(convertFileEntryToTuple(line))
-    ratingsFile.close()
+    ratings_file = open('ml-1m/ratings.dat', 'r', encoding='latin-1')
+    for line in ratings_file:
+        ratings.append(convert_file_entry_to_tuple(line))
+    ratings_file.close()
 
-    stop_time1 = time.time()
-    print('Loading the ratings dataset too: ' + str(stop_time1 - start_time) + ' seconds')
+    print("Loading the dataset took: " + str(time.time() - start_time) + " seconds")
 
-    # load the movies dataset
-    moviesFile = open('ml-1m/movies.dat', 'r', encoding='latin-1')
-    for line in moviesFile:
-        movies.append(convertFileEntryToTuple(line))
-    moviesFile.close()
-
-    stop_time2 = time.time()
-    print('Loading the movies dataset too: ' + str(stop_time2 - stop_time1) + ' seconds')
-
-    # load the users dataset
-    usersFile = open('ml-1m/users.dat', 'r', encoding='latin-1')
-    for line in usersFile:
-        users.append(convertFileEntryToTuple(line))
-    usersFile.close()
-
-    stop_time3 = time.time()
-    print('Loading the users dataset too: ' + str(stop_time3 - stop_time2) + ' seconds')
-    print('Loading data in total took ' + str(stop_time3 - start_time) + ' seconds')
-
-
-    # all data sets loaded into normal python lists (maybe this will be very slow)
-    # return ratings, movies, users
+    return np.array(ratings)
 
 
 # takes a FileEntry as a single string as input and transforms it into a tuple of ints
-def convertFileEntryToTuple(entry):
-    stringlist = entry.split("::")
-    return tuple(map(parseStringToInt, stringlist))
-asdf
+def convert_file_entry_to_tuple(entry):
+    string_list = entry.split("::")
+    return tuple(map(parse_string_to_int, string_list))
 
 
-def parseStringToInt(string):
-    returnValue = 0
+def parse_string_to_int(string):
+    return_value = 0
     try:
-        returnValue = int(string)
+        return_value = int(string)
     except (ValueError, UnicodeDecodeError):
-        returnValue = string
+        return_value = string
     finally:
-        return returnValue
+        return return_value
 
 
-'''
-### first recommender system steps ###
-
-Todo:
-    1. get average rating of other users for an item
-'''
-
-
-def getUserRatings(userId):
-    result_list = []
-    for rating in ratings:
-        if (rating[0] == userId):
-            result_list.append(rating)
-    return result_list
-
-
-def getMovieRatings(movieId):
-    result_list = []
-    for rating in ratings:
-        if (rating[1] == movieId):
-            result_list.append(rating)
-    return result_list
-
-
-def getMeanMovieRating(movieId):
-    ratings = getMovieRatings(movieId)
-    # [(1,3,5,19173459),etc] (UserID,MovieID,Rating,Timestamp)
-    mean_sum = 0
-    for tpl in ratings:
-        mean_sum += tpl[2]
-
-
-readDataset()
-# end
+# read the data set and get some ratings
+read_dataset()
