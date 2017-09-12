@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from sklearn.model_selection import KFold
 
 
 def read_data_set():
@@ -18,6 +19,18 @@ def read_data_set():
 
     print("Loading the dataset took: " + str(time.time() - start_time) + " seconds")
 
+    np.random.seed(1)
+    kf = KFold(n_splits=5, shuffle=True)
+    kf.get_n_splits(ratings)
+    print(kf)
+
+    for train_index, test_index in kf.split(ratings):
+        train_set = ratings[train_index]
+        test_set = ratings[test_index]
+        print(train_set.shape)
+        print(test_set.shape)
+        global_recommender(train_set, 0,0)
+
 
 # takes a FileEntry as a single string as input and transforms it into a tuple of ints
 def convert_file_entry_to_tuple(entry):
@@ -33,6 +46,16 @@ def parse_string_to_int(string):
         return_value = string
     finally:
         return return_value
+
+
+def global_recommender(train_set, user_id, movie_id):
+    """
+        Take the mean of all available ratings and use it as a prediction.
+    """
+    total_sum = train_set.sum()
+    count = np.count_nonzero(train_set)
+    print(total_sum/count)
+    return total_sum/count
 
 
 # read the data set and get some ratings
