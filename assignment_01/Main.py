@@ -52,6 +52,7 @@ def readDataset():
 def convertFileEntryToTuple(entry):
     stringlist = entry.split("::")
     return tuple(map(parseStringToInt, stringlist))
+asdf
 
 
 def parseStringToInt(string):
