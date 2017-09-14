@@ -1,15 +1,29 @@
 import time
 import math
+from .DataSetHandling import DataSetHandling
+from .Recommenders import Recommenders
 
 
-def main():
+def my_main():
     # run what you need
-    test_test_set()
-
-
-def test_test_set():
-    # build model from training set and test it on test set?
-    print("Testing")
+    dh = DataSetHandling()
+    recommender = Recommenders()
+    iter_tuple = dh.get_next_kfold()
+    mse_results = []
+    while iter_tuple != -1:
+        iter_tuple = dh.get_next_kfold()
+        recommender.global_recommender_train(dh.get_data_set()[iter_tuple[0]])
+        gmse_sum = 0
+        gmse_count = 0
+        for rating in dh.get_data_set()[iter_tuple[1]]:
+            pred = recommender.global_recommender_test(dh.get_data_set(), rating[0], rating[1])
+            act_val = rating[2]
+            mse = pow(act_val - pred, 2)
+            gmse_sum += mse
+            gmse_count += 1
+        gmse_sum = math.sqrt(gmse_sum / gmse_count)
+        mse_results.append(gmse_sum)
+    print(mse_results)
 
 
 def calculate_rmse(estimate):
@@ -54,3 +68,5 @@ def time_method_call(func):
     start_time = time.time()
     func()
     return time.time() - start_time
+
+my_main()

@@ -23,12 +23,7 @@ class DataSetHandling(object):
     def __init__(self, seed=1):
         # read data set on construction of object
         self._read_data_set()
-        self.set_random_seed(seed)
         super.__init__()
-        return
-
-    def set_random_seed(self, seed):
-        np.random.seed(seed)
         return
 
     def _read_data_set(self):
@@ -37,34 +32,15 @@ class DataSetHandling(object):
         """
         start_time = time.time()
         # shape: 6040 users, 3952 movies
-        ratings = np.zeros((6041, 3953))
 
-        # load the ratings dataset
-        ratings_file = open('ml-1m/ratings.dat', 'r', encoding='latin-1')
-        for line in ratings_file:
-            line_tuple = self._convert_file_entry_to_tuple(line)
-            ratings[line_tuple[0]][line_tuple[1]] = line_tuple[2]
-        ratings_file.close()
+        ratings = np.genfromtxt("ratings.dat", usecols=(0, 1, 2), delimiter='::', dtype='int')
+        print(ratings.shape)
 
         self._data = ratings
 
         print("Loading the dataset took: " + str(time.time() - start_time) + " seconds")
 
         return
-
-    # takes a FileEntry as a single string as input and transforms it into a tuple of ints
-    def _convert_file_entry_to_tuple(self, entry):
-        string_list = entry.split("::")
-        return tuple(map(self._parse_string_to_int, string_list))
-
-    def _parse_string_to_int(self, string):
-        return_value = 0
-        try:
-            return_value = int(string)
-        except (ValueError, UnicodeDecodeError):
-            return_value = string
-        finally:
-            return return_value
 
     def get_data_set(self):
         """
