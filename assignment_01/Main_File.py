@@ -9,21 +9,37 @@ def my_main():
     dh = DataSetHandling()
     recommender = Recommenders()
     kf = dh.get_kfold_obj()
-    mse_results = []
+    g_mse_results = []
+    u_mse_results = []
     for train, test in kf:
         # calculate and set the global mean of the object
         recommender.global_recommender_train(dh.get_data_set()[train])
-        gmse_sum = 0
-        gmse_count = 0
+        recommender.user_recommender_train(dh.get_data_set()[train])
+        g_gmse_sum = 0
+        g_gmse_count = 0
+        u_gmse_sum = 0
+        u_gmse_count = 0
         for rating in dh.get_data_set()[test]:
-            pred = recommender.global_recommender_test(dh.get_data_set(), rating[0], rating[1])
+            g_pred = recommender.global_recommender_test(dh.get_data_set(), rating[0], rating[1])
+            u_pred = recommender.user_recommender_test(dh.get_data_set(), rating[0], rating[1])
             act_val = rating[2]
-            mse = pow(act_val - pred, 2)
-            gmse_sum += mse
-            gmse_count += 1
-        gmse_sum = math.sqrt(gmse_sum / gmse_count)
-        mse_results.append(gmse_sum)
-    print(mse_results)
+            g_mse = pow(act_val - g_pred, 2)
+            u_mse = pow(act_val - u_pred, 2)
+            g_gmse_sum += g_mse
+            g_gmse_count += 1
+            u_gmse_sum += u_mse
+            u_gmse_count += 1
+
+
+        g_gmse_sum = math.sqrt(g_gmse_sum / g_gmse_count)
+        g_mse_results.append(g_gmse_sum)
+        u_gmse_sum = math.sqrt(u_gmse_sum / u_gmse_count)
+        u_mse_results.append(u_gmse_sum)
+    print("Global Mean Recommender Results:")
+    print(g_mse_results)
+    print("User Mean Recommender Results:")
+    print(u_mse_results)
+
 
 
 def calculate_rmse(estimate):
