@@ -33,7 +33,7 @@ class DataSetHandling(object):
         # shape: 6040 users, 3952 movies
 
         ratings = np.genfromtxt("ml-1m/ratings.dat", usecols=(0, 1, 2), delimiter='::', dtype='int')
-        print(ratings.shape)
+        # print(ratings.shape)
 
         self._data = ratings
 

@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 
 class Recommenders(object):
@@ -10,36 +11,49 @@ class Recommenders(object):
     object structure of this class to store values and reuse them for various calculations.
     """
     _global_mean = -1
-    _user_predictions = np.array([])
+    _user_predictions = np.zeros(6040)
+    _movie_predictions = np.zeros(3952)
 
     def global_recommender_train(self, data):
         """
         Take the mean of all available ratings and use it as a prediction.
         """
-        if self._global_mean > 0:
-            return self._global_mean
-        else:
-            total_sum = data.sum()
-            count = np.count_nonzero(data)
-            return total_sum/count
-        print("Global Mean calculated")
+        print("Global Mean calculated: {}".format(self._global_mean))
+        total_sum = data[:,2].sum()
+        count = np.shape(data)[0]
+        self._global_mean = total_sum/count
+        return total_sum/count
 
     def global_recommender_test(self, data, user_id, movie_id):
         return self._global_mean
 
     def user_recommender_train(self, data):
-        # we get the data as a 3x750000 matrix
-        user_predictions = []
+        # we get the data as a 750000x3 matrix
         for userId in np.arange(6040):
-            user_predictions.append(self._user_recommender_train_user(data, userId+1))
-        self._user_predictions = np.array(user_predictions)
-        print("User Mean calculated")
+            self._user_predictions[userId] = self._user_recommender_train_user(data, userId+1)
 
     def _user_recommender_train_user(self, data, user_id):
-        #print(data[:10])
-        user_data = np.array([x for x in data if x[0] == user_id])
-        #print(user_data)
-        return np.sum(user_data, axis=0)[2]/user_data.shape[0]
+        user_data = np.where(data[:,2] == user_id)
+        if np.size(user_data) > 0:
+            return np.sum(user_data, axis=0)[2]/user_data[0].shape[0]
+        else:
+            return 0
 
     def user_recommender_test(self, data, user_id, movie_id):
-        return self._user_predictions[user_id]
+        return self._user_predictions[user_id-1]
+
+    def movie_recommender_train(self, data):
+        # we get the data as a 750000x3 matrix
+        for movie_id in np.arange(3952):
+            self._movie_predictions[movie_id] = self._user_recommender_train_user(data, movie_id+1)
+        print("User Mean calculated")
+
+    def _movie_recommender_train_user(self, data, movie_id):
+        movie_data = np.where(data[:,2] == movie_id)
+        if np.size(movie_data) > 0:
+            return np.sum(movie_data, axis=0)[2]/movie_data[0].shape[0]
+        else:
+            return 0
+
+    def movie_recommender_test(self, data, user_id, movie_id):
+        return self._movie_predictions[movie_id-1]
