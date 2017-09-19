@@ -19,6 +19,7 @@ def my_main():
         print("Training the user recommender")
         recommender.user_recommender_train(dh.get_data_set()[train])
         print("Training the movie recommender")
+        recommender.movie_recommender_train(dh.get_data_set()[train])
         g_gmse_sum = 0
         gmse_count = 0
         u_gmse_sum = 0
