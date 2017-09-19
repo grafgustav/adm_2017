@@ -1,8 +1,7 @@
 import time
 import math
-from .DataSetHandling import DataSetHandling
-from .Recommenders import Recommenders
-
+from adm_2017.assignment_01.DataSetHandling import DataSetHandling
+from adm_2017.assignment_01.Recommenders import Recommenders
 
 def my_main():
     # run what you need
