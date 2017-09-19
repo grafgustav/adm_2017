@@ -48,7 +48,7 @@ class DataSetHandling(object):
         """
         return self._data
 
-    def get_next_kfold(self):
+    def get_kfold_obj(self):
         """
         Returns the next tuple of indices for training and test set for cross-validation.
 
@@ -60,5 +60,4 @@ class DataSetHandling(object):
                 iter_tuple = dh.get_next_kfold()
         :return: (train_indices, test_indices)
         """
-        for train, test in self._kfold_obj:
-            yield train, test
+        return self._kfold_obj.split(self._data)

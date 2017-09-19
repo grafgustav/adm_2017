@@ -3,18 +3,19 @@ import math
 from adm_2017.assignment_01.DataSetHandling import DataSetHandling
 from adm_2017.assignment_01.Recommenders import Recommenders
 
+
 def my_main():
     # run what you need
     dh = DataSetHandling()
     recommender = Recommenders()
-    iter_tuple = dh.get_next_kfold()
+    kf = dh.get_kfold_obj()
     mse_results = []
-    while iter_tuple != -1:
-        iter_tuple = dh.get_next_kfold()
-        recommender.global_recommender_train(dh.get_data_set()[iter_tuple[0]])
+    for train, test in kf:
+        # calculate and set the global mean of the object
+        recommender.global_recommender_train(dh.get_data_set()[train])
         gmse_sum = 0
         gmse_count = 0
-        for rating in dh.get_data_set()[iter_tuple[1]]:
+        for rating in dh.get_data_set()[test]:
             pred = recommender.global_recommender_test(dh.get_data_set(), rating[0], rating[1])
             act_val = rating[2]
             mse = pow(act_val - pred, 2)
