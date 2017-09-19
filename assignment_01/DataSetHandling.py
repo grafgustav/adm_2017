@@ -16,14 +16,13 @@ class DataSetHandling(object):
     """
 
     # init data as empty matrix
-    _data = np.matrix()
+    _data = np.array([])
     _kfold_iter = 0
     _kfold_obj = KFold(n_splits=5, shuffle=True)
 
     def __init__(self, seed=1):
         # read data set on construction of object
         self._read_data_set()
-        super.__init__()
         return
 
     def _read_data_set(self):
@@ -33,7 +32,7 @@ class DataSetHandling(object):
         start_time = time.time()
         # shape: 6040 users, 3952 movies
 
-        ratings = np.genfromtxt("ratings.dat", usecols=(0, 1, 2), delimiter='::', dtype='int')
+        ratings = np.genfromtxt("ml-1m/ratings.dat", usecols=(0, 1, 2), delimiter='::', dtype='int')
         print(ratings.shape)
 
         self._data = ratings
@@ -61,11 +60,5 @@ class DataSetHandling(object):
                 iter_tuple = dh.get_next_kfold()
         :return: (train_indices, test_indices)
         """
-        if self._kfold_iter < 5:
-            result_tuple = self._kfold_obj.split(self._data)[self._kfold_iter]
-            self._kfold_iter += 1
-            return result_tuple
-        else:
-            # some kind of error?
-            return -1
-
+        for train, test in self._kfold_obj:
+            yield train, test
