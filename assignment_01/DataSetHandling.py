@@ -16,7 +16,7 @@ class DataSetHandling(object):
     """
 
     # init data as empty matrix
-    _data = np.matrix()
+    _data = np.matrix([])
     _kfold_iter = 0
     _kfold_obj = KFold(n_splits=5, shuffle=True)
 
