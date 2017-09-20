@@ -1,5 +1,4 @@
 import numpy as np
-import time
 
 
 class Recommenders(object):
@@ -13,6 +12,7 @@ class Recommenders(object):
     _global_mean = -1
     _user_predictions = np.zeros(6040)
     _movie_predictions = np.zeros(3952)
+    _lin_coefficients = []
 
     def global_recommender_train(self, data):
         """
@@ -24,7 +24,7 @@ class Recommenders(object):
         self._global_mean = total_sum/count
         return total_sum/count
 
-    def global_recommender_test(self, data, user_id, movie_id):
+    def global_recommender_test(self, user_id, movie_id):
         return self._global_mean
 
     def user_recommender_train(self, data):
@@ -39,7 +39,7 @@ class Recommenders(object):
         else:
             return 0
 
-    def user_recommender_test(self, data, user_id, movie_id):
+    def user_recommender_test(self, user_id, movie_id):
         return self._user_predictions[user_id-1]
 
     def movie_recommender_train(self, data):
@@ -54,5 +54,24 @@ class Recommenders(object):
         else:
             return 0
 
-    def movie_recommender_test(self, data, user_id, movie_id):
+    def movie_recommender_test(self, user_id, movie_id):
         return self._movie_predictions[movie_id-1]
+
+    def weighted_recommender_train(self, data):
+        # movie and user recommenders should have run before
+        matr = np.vstack([data[:, 0], data[:, 1], np.ones(len(data))]).T
+        y = data[:, 2]
+        S = np.linalg.lstsq(matr, y)
+        self._lin_coefficients = S[0]
+
+    def weighted_recommender_test(self, user_id, movie_id):
+        a = self.movie_recommender_test(user_id, movie_id)
+        b = self.user_recommender_test(user_id, movie_id)
+        alpha, beta, gamma = self._lin_coefficients
+        return a*alpha + b*beta + gamma
+
+    def matrix_factorization(self, data):
+        ratings = np.zeros((6040, 3952))
+        for rating in data:
+            ratings[rating[0]-1][rating[1]-1] = rating[2]
+
