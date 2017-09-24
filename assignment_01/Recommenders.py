@@ -1,25 +1,20 @@
 import numpy as np
+import math
 
 
 class Recommenders(object):
-    """
-    How to structure the recommender systems and how to call them from the main method?
-    I suggest we have static methods for each recommendation technique taking a user and a movie as input.
-    The method then calculates a score for this cell and returns it.
-    WARNING: If a recommendation technique requires a lot of pre-calculations, it might be better to use the
-    object structure of this class to store values and reuse them for various calculations.
-    """
     _global_mean = -1
     _user_predictions = np.zeros(6040)
     _movie_predictions = np.zeros(3952)
     _lin_coefficients = []
+    _u_matrix = np.array([])
+    _m_matrix = np.array([])
+    _eeta = 0.001
+    _lambda = 0.01
+    _error_diff_threshold = 0.005
 
     def global_recommender_train(self, data):
-        """
-        Take the mean of all available ratings and use it as a prediction.
-        """
-        print("Global Mean calculated: {}".format(self._global_mean))
-        total_sum = data[:,2].sum()
+        total_sum = data[:, 2].sum()
         count = np.shape(data)[0]
         self._global_mean = total_sum/count
         return total_sum/count
@@ -28,7 +23,6 @@ class Recommenders(object):
         return self._global_mean
 
     def user_recommender_train(self, data):
-        # we get the data as a 750000x3 matrix
         for userId in np.arange(6040):
             self._user_predictions[userId] = self._user_recommender_train_user(data, userId+1)
 
@@ -48,7 +42,7 @@ class Recommenders(object):
             self._movie_predictions[movie_id] = self._movie_recommender_train_movie(data, movie_id+1)
 
     def _movie_recommender_train_movie(self, data, movie_id):
-        movie_data = data[np.where(data[:,1] == movie_id)[0]]
+        movie_data = data[np.where(data[:, 1] == movie_id)[0]]
         if np.size(movie_data) > 0:
             return np.sum(movie_data, axis=0)[2]/movie_data.shape[0]
         else:
@@ -59,7 +53,7 @@ class Recommenders(object):
 
     def weighted_recommender_train(self, data):
         # movie and user recommenders should have run before
-        matr = np.vstack([data[:, 0], data[:, 1], np.ones(len(data))]).T
+        matr = np.array([[self._user_predictions[rating[0]-1], self._movie_predictions[rating[1]-1], 1] for rating in data])
         y = data[:, 2]
         S = np.linalg.lstsq(matr, y)
         self._lin_coefficients = S[0]
@@ -70,8 +64,32 @@ class Recommenders(object):
         alpha, beta, gamma = self._lin_coefficients
         return a*alpha + b*beta + gamma
 
-    def matrix_factorization(self, data):
-        ratings = np.zeros((6040, 3952))
-        for rating in data:
-            ratings[rating[0]-1][rating[1]-1] = rating[2]
+    def matrix_factorization_train(self, data):
+        self._u_matrix = np.random.uniform(low=-1, high=1, size=6040 * 100).reshape((6040, 100))
+        self._m_matrix = np.random.uniform(low=-1, high=1, size=100 * 3952).reshape((100, 3952))
 
+        rmse = 0
+        last_rmse = 100
+        counter = 0
+        while abs(rmse - last_rmse) > self._error_diff_threshold:
+            counter += 1
+            rmse_sum = 0
+            for rating in data:
+                i = rating[0]-1
+                j = rating[1]-1
+                r = rating[2]
+                pred = np.dot(self._u_matrix[i, :], self._m_matrix[:, j])
+                error = r - pred if r > 0 else 0
+                u_grad_new = self._u_matrix[i, :] + self._eeta * (2*error*self._m_matrix[:, j] - self._lambda * self._u_matrix[i, :])
+                m_grad_new = self._m_matrix[:, j] + self._eeta * (2 * error * self._u_matrix[i, :] - self._lambda * self._m_matrix[:, j])
+                self._u_matrix[i, :] = u_grad_new
+                self._m_matrix[:, j] = m_grad_new
+                rmse_sum += error * error
+            last_rmse = rmse
+            rmse = math.sqrt(rmse_sum / len(data))
+            print("Error: " + str(rmse))
+        print("Matrix Factorization trained in " + str(counter) + " iterations.")
+
+    def matrix_factorization_test(self, user_id, movie_id):
+        pred = np.dot(self._u_matrix[user_id-1, :], self._m_matrix[:, movie_id-1])
+        return pred

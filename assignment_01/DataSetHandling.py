@@ -33,7 +33,6 @@ class DataSetHandling(object):
         # shape: 6040 users, 3952 movies
 
         ratings = np.genfromtxt("ml-1m/ratings.dat", usecols=(0, 1, 2), delimiter='::', dtype='int')
-        # print(ratings.shape)
 
         self._data = ratings
 
@@ -51,13 +50,6 @@ class DataSetHandling(object):
     def get_kfold_obj(self):
         """
         Returns the next tuple of indices for training and test set for cross-validation.
-
-        Example:
-            iter_tuple = dh.get_next_kfold()
-            while  iter_tuple != -1:
-                train(dh.get_data_set[iter_tuple[0]])
-                test(dh.get_data_set[iter_tuple[1]])
-                iter_tuple = dh.get_next_kfold()
         :return: (train_indices, test_indices)
         """
         return self._kfold_obj.split(self._data)
