@@ -9,8 +9,8 @@ class Recommenders(object):
     _lin_coefficients = []
     _u_matrix = np.array([])
     _m_matrix = np.array([])
-    _eeta = 0.001
-    _lambda = 0.01
+    _eeta = 0.005
+    _lambda = 0.001
     _error_diff_threshold = 0.005
 
     def global_recommender_train(self, data):
@@ -57,6 +57,7 @@ class Recommenders(object):
         y = data[:, 2]
         S = np.linalg.lstsq(matr, y)
         self._lin_coefficients = S[0]
+        print("Linear coefficients (alpha, beta, gamma): " + str(self._lin_coefficients))
 
     def weighted_recommender_test(self, user_id, movie_id):
         a = self.movie_recommender_test(user_id, movie_id)
@@ -65,8 +66,8 @@ class Recommenders(object):
         return a*alpha + b*beta + gamma
 
     def matrix_factorization_train(self, data):
-        self._u_matrix = np.random.uniform(low=-1, high=1, size=6040 * 100).reshape((6040, 100))
-        self._m_matrix = np.random.uniform(low=-1, high=1, size=100 * 3952).reshape((100, 3952))
+        self._u_matrix = np.random.uniform(low=-0.01, high=0.01, size=6040 * 100).reshape((6040, 100))
+        self._m_matrix = np.random.uniform(low=-0.01, high=0.01, size=100 * 3952).reshape((100, 3952))
 
         rmse = 0
         last_rmse = 100
