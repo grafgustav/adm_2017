@@ -1,24 +1,30 @@
-# Implement functionality to simulate the data stream here
 import numpy as np
 import math
-import random
-import matplotlib.pyplot as plt
-import hashlib
 
 
 def main_function():
-    # define parameters used
-    length = 1000000
-    hash_table_length = 32
-    max_int = math.pow(2, hash_table_length)-1
-
-    np.random.seed(2018)
+    np.random.seed(2017)
+    true_count = 262144 # for loglog and flajolet-martin
+    alt_true_count = 4096 # for probabilistic counting
 
     print("Starting processing")
+    print("Elements to process by LogLog and Flajolet-Martin: " + str(true_count))
+    print("Elements to process by Probabilistic Counting: " + str(alt_true_count))
 
-    main_probabilistic_counting()
-    # main_log_log()
-    # main_flajolet_martin()
+    print("Probabilistic counting estimate:")
+    pc_estimate = main_probabilistic_counting_reduced()
+    print(pc_estimate)
+    print("RAE probabilistic counting: " + str(abs(pc_estimate - alt_true_count)/alt_true_count))
+    print("log-log estimate:")
+    ll_ks, ll_estimates = main_log_log()
+    print("For k-values: " + str(ll_ks) + " estimates: " + str(ll_estimates) + "were achieved")
+    rae_list_ll = [abs(ll_estimate - true_count)/true_count for ll_estimate in ll_estimates]
+    print("RAE log-log estimates: " + str(rae_list_ll))
+    print("Flajolet-Martin estimate:")
+    fm_estimate = main_flajolet_martin()
+    print(fm_estimate)
+    print("RAE Flajolet-Martin: " + str(abs(fm_estimate - true_count)/true_count))
+    print("Finished processing")
 
 
 def main_flajolet_martin():
@@ -31,7 +37,7 @@ def main_flajolet_martin():
         hash_table[k] = 1
         counter += 1
     estimate = calculate_r(hash_table)
-    print(estimate)
+    return estimate
 
 
 def conv_array_to_string(array):
@@ -39,11 +45,13 @@ def conv_array_to_string(array):
 
 
 def main_log_log():
-    for k in range(20):
+    ks = range(15)
+    estimates = []
+    for k in ks:
         if k == 0:
             continue
-        estimate = count_with_log_log(k)
-        print("There are " + str(estimate) + " unique elements in the stream")
+        estimates.append(count_with_log_log(k))
+    return ks, estimates
 
 
 def simulate_data_stream(length, max_int):
@@ -58,16 +66,13 @@ def count_trailing_zeroes(_input):
 
 
 def calculate_r(hash_table):
-    phi = 0.77351
     r = 0
     for i in np.arange(64):
         if hash_table[i] == 0:
-            r = i
+            r = i + 1
             break
-
-    print(hash_table)
-
-    return round(math.pow(2, r)/1, 0)
+    # print(hash_table)
+    return round(math.pow(2, r), 0)
 
 
 def my_hash_function(i, num_buckets):
@@ -92,11 +97,25 @@ def count_with_log_log(k):
 
 
 def get_index_of_first_one(i):
+    # fill up with leading zeros if bitstring is too short
     if len(i) < 32:
         return 32 - len(i) + 1
     for counter in range(len(i)):
         if i[counter] == '1':
             return counter+1
+
+
+def get_index_of_first_zero(i):
+    # fill up with leading zeros if bitstring is too short
+    for counter in range(len(i)):
+        if i[len(i) - counter - 1] == '0':
+            return counter + 1
+
+
+def get_index_of_first_one_from_right(i):
+    for counter in range(len(i)):
+        if i[len(i)-1-counter] == '1':
+            return counter + 1
 
 
 def get_pseudo_hash_function():
@@ -106,26 +125,25 @@ def get_pseudo_hash_function():
         yield hash_value
 
 
-def main_probabilistic_counting():
+def main_probabilistic_counting_reduced():
     phi = 0.77351
-    nmap = 64
-    maxlength = 32
-    bitmaps = np.zeros((nmap, maxlength))
+    nmap = 64 # amount of bitmap vectors
+    bitmap_length = 32
+    bitmap = np.zeros(bitmap_length*nmap).reshape((nmap, bitmap_length)) # nmap bitmap vectors, shape (64,32)
+    counter = 0
     for x in get_pseudo_hash_function():
-        num = int(conv_array_to_string(x), 2)
-        alpha = num % nmap
-        index = get_index_of_first_one(bin(num // maxlength).split("b")[1])-1
-        bitmaps[alpha, index] = 1
-    S = 0
-    for i in range(nmap):
-        R = 0
-        print(bitmaps[i, :])
-        while (R <= maxlength) and (bitmaps[i, R] == 1):
-            R += 1
-            S += R
+        _map = counter % 64 # _map in [0, 63]
+        index = get_index_of_first_one(conv_array_to_string(x)) - 1
+        bitmap[_map, index] = 1
+        counter += 1
 
-    Z = math.trunc(nmap/phi*math.pow(2, S / nmap))
-    print(Z)
+    p_sum = 0
+    for p_index in range(nmap):
+        p_sum += np.where(bitmap[p_index, :] == 0)[0][0]
+
+    p_avg = p_sum / nmap
+    estimate = (1/phi)*math.pow(2, p_avg)
+    return estimate
 
 
 main_function()
