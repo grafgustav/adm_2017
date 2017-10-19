@@ -5,27 +5,34 @@ import _pickle as pickle
 
 def main_function():
     # to persist the data for quick access, set to persist=True, to load it in later executions, set persist=False
-    persist = False
+    persist_data = False
+    persist_signature_matrix = False
 
-    n = 10
+    # length of signatures
+    n = 150
 
     print("Starting processing!")
-    if persist:
+    if persist_data:
         data = load_data()
         print(data.shape)
-        data_matr = build_sparse_matrix(data)
-        pickle.dump(data_matr, open("data.p", "wb"))
+        data_matrix = build_sparse_matrix(data)
+        pickle.dump(data_matrix, open("data.p", "wb"))
     else:
-        data_matr = pickle.load(open("data.p", "rb"))
+        data_matrix = pickle.load(open("data.p", "rb"))
 
-    nr_movies = data_matr.shape[1]
-    nr_users = data_matr.shape[0]
+    nr_movies = data_matrix.shape[1]
+    nr_users = data_matrix.shape[0]
     print((nr_movies, nr_users))
-    signature_matrix = np.zeros((n, nr_users))
-    for i in range(n):
-        permutation = get_permutation(nr_movies)
-        signature_matrix[i] = build_signature(data_matr, permutation)
-    print(signature_matrix)
+    if persist_signature_matrix:
+        signature_matrix = np.zeros((n, nr_users))
+        for i in range(n):
+            permutation = get_permutation(nr_movies)
+            signature_matrix[i] = build_signature(data_matrix, permutation)
+            print(i)
+        pickle.dump(signature_matrix, open("sig_matrix.p", "wb"))
+    else:
+        signature_matrix = pickle.load(open("sig_matrix.p", "rb"))
+    print(signature_matrix.shape)
     print("Finished processing!")
 
 
@@ -48,7 +55,7 @@ def build_sparse_matrix(data):
 
 
 def get_permutation(max_index):
-    print("Building permutation")
+    # print("Building permutation")
     # n = number of hash functions, max_index = length of vector
     return np.random.permutation(max_index)
 
@@ -56,12 +63,12 @@ def get_permutation(max_index):
 def build_signature(data_matrix, permutation):
     # data_matrix: 103703x17770, permutation: len(17770)
     # build the signature over one permutation for every user
-    print("Building signature")
+    # print("Building signature")
     n = data_matrix.shape[0]
     signature = np.zeros(n)
     for i in range(n):
         signature[i] = np.min(permutation[data_matrix[i, :].nonzero()[1]])
-    print("Signature built")
+    # print("Signature built")
     return signature
 
 
