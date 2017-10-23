@@ -24,12 +24,12 @@ n = 100
 B = 25
 R = n/B
 Test = pd.DataFrame(S[np.where(a == 1)[0]])
-v = Test.values              
+v = Test.values
 #lt = pd.DataFrame((v[:, None] == v.T))
 #np.fill_diagonal(lt.values, 0)
 res = 1 - pdist(Test.T, 'jaccard')
 squareform(res)
-distance = round(np.triu(pd.DataFrame(squareform(res), index = Test.T.index, 
+distance = round(np.triu(pd.DataFrame(squareform(res), index = Test.T.index,
                         columns = Test.T.index), k = 0), ndigits = 1)
 
 
