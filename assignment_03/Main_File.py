@@ -1,6 +1,20 @@
 import numpy as np
 import scipy.sparse as sps
 import _pickle as pickle
+import sys
+
+file_path = ""
+
+
+def set_options():
+    arguments = sys.argv
+    if len(arguments) == 2:
+        np.random.seed(arguments[0])
+        np.set_printoptions(edgeitems=10)
+        file_path = arguments[1]
+        return True
+    else:
+        return False
 
 
 def main_function():
@@ -118,6 +132,14 @@ def my_hash(l):
     return sum(l) % 104729
 
 
-np.random.seed(2017)
-np.set_printoptions(edgeitems=10)
+def output_tuple_to_txt(tuple):
+    # tuple consists of (lower id, higher id)
+    with open("results.txt", "a") as myfile:
+        myfile.write(str(tuple))
+
+
+# if set_options():
 main_function()
+# else:
+#   print("Argument list invalid")
+#   print("Usage: Main.py [random seed] ["path-to-user-movie.npy"])
