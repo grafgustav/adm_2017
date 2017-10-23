@@ -33,6 +33,7 @@ def main_function():
     else:
         signature_matrix = pickle.load(open("sig_matrix.p", "rb"))
     print(signature_matrix.shape)
+    execute_lsh(signature_matrix)
     print("Finished processing!")
 
 
@@ -70,6 +71,51 @@ def build_signature(data_matrix, permutation):
         signature[i] = np.min(permutation[data_matrix[i, :].nonzero()[1]])
     # print("Signature built")
     return signature
+
+
+def execute_lsh(signature_matrix):
+    # Locality Sensitive Hashing
+    print("Executing the LSH function")
+    nr_buckets, band_size = 100, 50
+    nr_signatures = signature_matrix.shape[0]
+    nr_bands = int(nr_signatures / band_size)
+
+    hash_dic = dict()
+    candidate_list = []
+    # 1. divide user signature into bands
+    for i in range(nr_bands):
+        user_index = 0
+        for user in signature_matrix.T:
+            # user is min hash vector
+            band = user[i*band_size:(i+1)*band_size]
+            # 2. apply hash function to band
+            band_hash = my_hash(band)
+            # 3. check if hash bucket is used
+            if hash_dic.get(band_hash):
+                # 4. match users together who map bands to the same bucket in candidate column pair list
+                candidate_list.append((hash_dic.get(band_hash), user_index))
+            else:
+                hash_dic[band_hash] = user_index
+
+            user_index += 1
+
+    print(candidate_list)
+    print(len(candidate_list))
+    candidate_filter = [check_if_pair_is_similar(signature_matrix[:, sig1], signature_matrix[:, sig2])
+                        for sig1, sig2 in candidate_list]
+    print(candidate_filter)
+    #print(len(candidate_list[candidate_filter]))
+    return candidate_list[candidate_filter]
+
+
+def check_if_pair_is_similar(sig1, sig2):
+    return sig1 == sig2
+
+
+def my_hash(l):
+    # 104729 prime #10,000
+    # bad hash function, because sum can be very ambiguous
+    return sum(l) % 104729
 
 
 np.random.seed(2017)
