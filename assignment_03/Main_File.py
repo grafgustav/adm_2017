@@ -2,11 +2,6 @@ import numpy as np
 import scipy.sparse as sps
 import _pickle as pickle
 import sys
-import pandas as pd
-from scipy.spatial.distance import pdist, jaccard
-from scipy.spatial.distance import squareform
-from collections import defaultdict
-import random
 import time
 
 
@@ -14,6 +9,7 @@ file_path = ""
 
 
 def set_options():
+    # TODO: Activate this functionality!!
     arguments = sys.argv
     if len(arguments) == 2:
         np.random.seed(arguments[0])
@@ -45,6 +41,7 @@ def main_function():
     nr_users = data_matrix.shape[0]
     print((nr_movies, nr_users))
     if persist_signature_matrix:
+        print("Building signature matrix")
         signature_matrix = np.zeros((n, nr_users))
         for i in range(n):
             start_time = time.time()
@@ -57,12 +54,13 @@ def main_function():
             print(i)
         pickle.dump(signature_matrix, open("sig_matrix2.p", "wb"))
     else:
+        print("Loading signature matrix")
         signature_matrix = pickle.load(open("sig_matrix2.p", "rb"))
     print(signature_matrix.shape)
     candidate_pairs = execute_lsh(signature_matrix)
     results = test_jaccard_similarity(candidate_pairs, data_matrix)
     print(len(results))
-    print_results(results)
+    # print_results(results)
     print("Finished processing!")
 
 
@@ -98,9 +96,10 @@ def build_signature(data_matrix, permutation):
     signature = np.zeros(n)
     permuted_matrix = data_matrix[:, permutation] # takes about 1.6s
 
-    # TODO: this stuff can surely be folded
+    # Folding is not faster
     for i in range(n):
         signature[i] = np.min(permuted_matrix[i].indices)
+
     # print("Signature built")
     return signature
 
@@ -108,14 +107,14 @@ def build_signature(data_matrix, permutation):
 def execute_lsh(signature_matrix):
     # Locality Sensitive Hashing
     print("Executing the LSH function")
-    nr_buckets, band_size = 100, 10
+    band_size = 10
     nr_signatures = signature_matrix.shape[0]
     nr_bands = int(nr_signatures / band_size)
 
-    hash_dic = dict()
     candidate_list = []
     # 1. divide user signature into bands
     for i in range(nr_bands):
+        hash_dic = dict()
         user_index = 0
         for user in signature_matrix.T:
             # user is min hash vector
@@ -140,7 +139,7 @@ def execute_lsh(signature_matrix):
             user_index += 1
 
     # candidate list is filled with candidates that have at least one band sufficiently similar
-    # next step: calculate exact jaccard similarity (using signatures, or using the full data set?)
+    # next step: calculate exact jaccard similarity
 
     print(len(candidate_list))
     print("Done")
@@ -154,49 +153,18 @@ def test_jaccard_similarity(candidate_pairs, data_matrix):
         jaccard_similarity = sum((data_matrix[can1, :].toarray().astype(int) & data_matrix[can2, :].toarray().astype(int))[0]) /\
                              sum((data_matrix[can1, :].toarray().astype(int) | data_matrix[can2, :].toarray().astype(int))[0])
         if jaccard_similarity >= 0.5:
-            if (can1, can2) not in results:
-                results.append((can1, can2))
+            if (can1+1, can2+1) not in results:
+                results.append((can1+1, can2+1))
+                output_tuple_to_txt((can1+1, can2+1))
     print(results)
     results.sort()
     return results
 
 
-def execute_lsh_2(S):
-    print(S.shape)
-    S = S[0:500, :]
-
-    n = 50
-    B = 10
-    R = n / B
-
-    a = np.repeat(list(range(B)), R)
-    a = np.array(random.sample(list(a), len(a)))
-    print(a)
-
-    Test = pd.DataFrame(S[np.where(a == 1)[0]])
-    # v = Test.values
-    # lt = pd.DataFrame((v[:, None] == v.T))
-    # np.fill_diagonal(lt.values, 0)
-    res = 1 - pdist(Test.T, 'jaccard')
-    squareform(res)
-    distance = np.triu(pd.DataFrame(squareform(res), index=Test.T.index, columns=Test.T.index), k=0)
-
-    d = defaultdict(list)
-    for pos, val in np.ndenumerate(distance):
-        if val:
-            d[val].append((pos[0], pos[1]))
-
-    return d
-
-
-def check_if_pair_is_similar(sig1, sig2):
-    return sig1 == sig2
-
-
 def output_tuple_to_txt(tuple):
     # tuple consists of (lower id, higher id)
     with open("results.txt", "a") as myfile:
-        myfile.write(str(tuple))
+        myfile.write(str(tuple) + "\n")
 
 
 def print_results(results):
